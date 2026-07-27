@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>77 投资工作台</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="77工作台" />
+<meta name="mobile-web-app-capable" content="yes" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root{
+    --bg:#14120F; --card:#1B1814; --line:#2B271F; --line2:#3a352c;
+    --gold:#C9A24B; --up:#3E8E5C; --down:#B14B41; --text:#E9E2D3;
+    --safe-t: env(safe-area-inset-top,0px); --safe-b: env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:'Noto Sans SC',system-ui,sans-serif;overscroll-behavior:none;}
+  .tape{font-family:'JetBrains Mono',ui-monospace,monospace;letter-spacing:.02em;}
+  .serif{font-family:'Noto Serif SC',serif;font-weight:700;}
+
+  /* ---- top bar (always visible, holds the drawer toggle) ---- */
+  .topbar{
+    position:sticky; top:0; z-index:15;
+    display:flex; align-items:center; gap:12px;
+    padding: calc(var(--safe-t) + 12px) 16px 12px;
+    background:#14120Fee; backdrop-filter: blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar .burger{
+    width:38px;height:38px;border-radius:8px;border:1px solid var(--line2);
+    background:#1B1814;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0; cursor:pointer;
+  }
+  .topbar .burger span, .topbar .burger span::before, .topbar .burger span::after{
+    content:""; display:block; width:16px; height:2px; background:var(--gold); position:relative;
+  }
+  .topbar .burger span::before{ position:absolute; top:-5px; }
+  .topbar .burger span::after{ position:absolute; top:5px; }
+  .topbar .title{display:flex;align-items:baseline;gap:6px;}
+  .topbar .title .n{color:var(--gold);font-size:19px;}
+  .topbar .title .t{font-size:14px;opacity:.85;}
+  .topbar .gear{margin-left:auto;opacity:.55;cursor:pointer;font-size:18px;background:none;border:none;color:var(--text);}
+
+  /* ---- drawer sidebar (off-canvas by default, slides in) ---- */
+  .scrim{
+    position:fixed; inset:0; background:#000000a0; z-index:24; opacity:0; pointer-events:none;
+    transition:opacity .25s ease;
+  }
+  .scrim.open{ opacity:1; pointer-events:auto; }
+  aside{
+    position:fixed; top:0; bottom:0; left:0; width:82vw; max-width:320px; z-index:25;
+    background:var(--bg); border-right:1px solid var(--line);
+    display:flex; flex-direction:column;
+    transform:translateX(-100%); transition:transform .25s ease;
+    padding-top:var(--safe-t); padding-bottom:var(--safe-b);
+  }
+  aside.open{ transform:translateX(0); }
+  .brand{padding:20px 20px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+  .brand .n{color:var(--gold);font-size:26px;}
+  .brand .t{font-size:16px;margin-left:6px;}
+  .brand .close{background:none;border:none;color:var(--text);opacity:.5;font-size:20px;cursor:pointer;padding:4px 8px;}
+  .datestr{padding:10px 20px 0;opacity:.45;font-size:11px;}
+  .addbar{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 8px;font-size:11px;opacity:.5;text-transform:uppercase;letter-spacing:.05em;}
+  .addbar button{background:none;border:none;color:var(--text);opacity:.8;cursor:pointer;font-size:20px;line-height:1;}
+  .list{flex:1;overflow-y:auto;padding:0 12px;-webkit-overflow-scrolling:touch;}
+  .item{display:flex;align-items:center;gap:10px;padding:13px 12px;border-radius:8px;cursor:pointer;font-size:14px;}
+  .item:active{background:#211D17;}
+  .item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .item .x{margin-left:auto;opacity:.35;cursor:pointer;padding:6px;font-size:15px;}
+  .hint{padding:0 20px;font-size:12px;opacity:.4;line-height:1.7;}
+  .foot{padding:14px 20px;border-top:1px solid var(--line);font-size:10px;opacity:.35;line-height:1.6;}
+
+  /* ---- main content ---- */
+  main{padding:20px 16px calc(24px + var(--safe-b));max-width:720px;margin:0 auto;}
+  h2{font-size:20px;margin:4px 0 4px;}
+  .sub{opacity:.5;font-size:12.5px;margin:0 0 18px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px;}
+  .row{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .price{font-size:27px;}
+  .up{color:var(--up);} .down{color:var(--down);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .label{font-size:11px;opacity:.5;}
+  .formula{font-size:10px;opacity:.4;margin-top:8px;}
+  select,input{background:transparent;border:1px solid var(--line2);color:var(--text);border-radius:8px;padding:11px 12px;font-size:15px;width:100%;}
+  .btn{background:var(--gold);color:#1B1814;border:none;border-radius:8px;padding:12px 16px;font-size:14px;font-weight:600;cursor:pointer;width:100%;}
+  .btn.ghost{background:#26211A;color:var(--gold);border:1px solid #C9A24B55;}
+  .modal-bg{position:fixed;inset:0;background:#00000090;display:flex;align-items:flex-end;justify-content:center;z-index:30;}
+  .modal{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + var(--safe-b));width:100%;max-width:480px;}
+  .modal h3{margin:0 0 14px;}
+  .modal .f{display:flex;flex-direction:column;gap:10px;}
+  .err{color:var(--down);font-size:12px;margin-top:8px;line-height:1.6;}
+  svg.candles{width:100%;height:auto;}
+
+  @media (min-width: 860px){
+    /* on wider screens the drawer can sit pinned open by default */
+    body.wide aside{ position:sticky; transform:none; width:280px; }
+    body.wide .scrim{ display:none; }
+    body.wide .app{ display:flex; }
+    body.wide main{ margin:0; flex:1; padding:32px 40px; max-width:none; }
+    body.wide .topbar{ display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button class="burger" onclick="toggleDrawer()"><span></span></button>
+  <div class="title"><span class="n serif">77</span><span class="t">投资工作台</span></div>
+  <button class="gear" onclick="openSettings()">⚙</button>
+</div>
+
+<div class="app">
+  <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+  <aside id="drawer">
+    <div class="brand">
+      <div><span class="n serif">77</span><span class="t serif">投资工作台</span></div>
+      <button class="close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="datestr tape" id="today"></div>
+    <div class="addbar"><span>自选清单</span><button onclick="openAdd()">＋</button></div>
+    <div class="list" id="list"></div>
+    <div class="hint">数据来自 AkShare（东方财富/新浪财经公开接口），分钟级/日级更新，非逐笔实时，仅供个人参考。</div>
+    <div class="foot" id="apiFoot"></div>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<div class="modal-bg" id="modalBg" style="display:none;">
+  <div class="modal">
+    <h3 class="serif">添加自选</h3>
+    <div class="f">
+      <select id="f_market">
+        <option value="a">A股个股（代码如 000001）</option>
+        <option value="fund">开放式基金（代码如 110020）</option>
+        <option value="etf">ETF（代码如 sh510300）</option>
+        <option value="index">全球指数 / 日经等（关键词如 日经）</option>
+      </select>
+      <input id="f_code" placeholder="代码 / 关键词" />
+      <input id="f_name" placeholder="显示名称（选填，默认用代码）" />
+      <input id="f_cost" placeholder="成本价 / 买入净值（选填）" type="number" />
+      <button class="btn" onclick="addHolding()">添加</button>
+      <button class="btn ghost" onclick="closeAdd()">取消</button>
+      <div class="err" id="addErr"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="settingsBg" style="display:none;">
+  <div class="modal">
+    <h3 class="serif">后端地址</h3>
+    <div class="f">
+      <div class="hint" style="padding:0 0 4px;">
+        填你部署在云端的后端网址（形如 https://xxx.onrender.com），
+        以及部署时设置的 API Key（没设就留空）。
+      </div>
+      <input id="s_api" placeholder="https://xxx.onrender.com" />
+      <input id="s_key" placeholder="API Key（如果设置了的话）" />
+      <button class="btn" onclick="saveSettings()">保存</button>
+      <button class="btn ghost" onclick="closeSettings()">取消</button>
+      <div class="err" id="settingsErr"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let API = localStorage.getItem("apiBase77") || "http://127.0.0.1:8000";
+let API_KEY = localStorage.getItem("apiKey77") || "";
+let watchlist = JSON.parse(localStorage.getItem("wl77") || "[]");
+let active = watchlist[0]?.id || null;
+
+if(window.innerWidth >= 860) document.body.classList.add("wide");
+
+document.getElementById("today").textContent = new Date().toLocaleDateString("zh-CN",{year:"numeric",month:"long",day:"numeric",weekday:"short"});
+document.getElementById("apiFoot").textContent = "后端地址：" + API;
+
+function toggleDrawer(){
+  const d=document.getElementById("drawer"), s=document.getElementById("scrim");
+  const open = d.classList.toggle("open"); s.classList.toggle("open", open);
+}
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("scrim").classList.remove("open");
+}
+function openSettings(){
+  document.getElementById("s_api").value = API;
+  document.getElementById("s_key").value = API_KEY;
+  document.getElementById("settingsBg").style.display="flex";
+}
+function closeSettings(){ document.getElementById("settingsBg").style.display="none"; }
+function saveSettings(){
+  const v = document.getElementById("s_api").value.trim().replace(/\/$/,"");
+  if(!v){ document.getElementById("settingsErr").textContent="请填写地址"; return; }
+  API = v; localStorage.setItem("apiBase77", API);
+  API_KEY = document.getElementById("s_key").value.trim(); localStorage.setItem("apiKey77", API_KEY);
+  document.getElementById("apiFoot").textContent = "后端地址：" + API;
+  closeSettings();
+  renderMain();
+}
+
+function saveWL(){ localStorage.setItem("wl77", JSON.stringify(watchlist)); renderList(); }
+function openAdd(){ document.getElementById("modalBg").style.display="flex"; document.getElementById("addErr").textContent=""; }
+function closeAdd(){ document.getElementById("modalBg").style.display="none"; }
+
+async function addHolding(){
+  const market = document.getElementById("f_market").value;
+  const code = document.getElementById("f_code").value.trim();
+  const nameIn = document.getElementById("f_name").value.trim();
+  const cost = parseFloat(document.getElementById("f_cost").value) || 0;
+  if(!code){ document.getElementById("addErr").textContent="请填代码/关键词"; return; }
+  const id = market+":"+code+":"+Date.now();
+  watchlist.push({id, market, code, name: nameIn || code, cost});
+  saveWL();
+  active = id;
+  closeAdd();
+  closeDrawer();
+  renderMain();
+}
+function removeHolding(id){
+  watchlist = watchlist.filter(w=>w.id!==id);
+  saveWL();
+  if(active===id) active = watchlist[0]?.id || null;
+  renderMain();
+}
+
+const MARKET_LABEL = {a:"A股", fund:"基金", etf:"ETF", index:"指数"};
+const MARKET_COLOR = {a:"#C0433E", fund:"#8A6AC0", etf:"#4C8A6A", index:"#5B9AA6"};
+
+function renderList(){
+  const el = document.getElementById("list");
+  if(watchlist.length===0){ el.innerHTML = '<div class="hint">还没有添加，点上方 “＋” 添加一个吧。</div>'; return; }
+  el.innerHTML = watchlist.map(w=>`
+    <div class="item" onclick="selectItem('${w.id}')">
+      <span class="dot" style="background:${MARKET_COLOR[w.market]}"></span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${w.name}</span>
+      <span class="x" onclick="event.stopPropagation();removeHolding('${w.id}')">✕</span>
+    </div>`).join("");
+}
+function selectItem(id){ active = id; renderMain(); closeDrawer(); }
+
+function pct(a,b){ return b===0?0:((a-b)/b)*100; }
+function fmt(n,d=2){ return Number(n).toFixed(d); }
+
+function drawCandles(series){
+  if(!series.length) return "<div class='hint'>暂无历史数据</div>";
+  const w=720,h=220,pad=28;
+  const highs=series.map(d=>d.high), lows=series.map(d=>d.low);
+  const max=Math.max(...highs), min=Math.min(...lows), range=(max-min)||1;
+  const cw=(w-pad*2)/series.length;
+  const y=v=> pad + (1-(v-min)/range)*(h-pad*2);
+  let bars = series.map((d,idx)=>{
+    const x = pad + idx*cw + cw/2;
+    const up = d.close>=d.open;
+    const color = up? "#3E8E5C":"#B14B41";
+    const top=y(Math.max(d.open,d.close)), bot=y(Math.min(d.open,d.close));
+    return `<line x1="${x}" y1="${y(d.high)}" x2="${x}" y2="${y(d.low)}" stroke="${color}" stroke-width="1.2"/>
+    <rect x="${x-cw*0.32}" y="${Math.min(top,bot)}" width="${cw*0.64}" height="${Math.max(1.4,Math.abs(bot-top))}" fill="${color}"/>`;
+  }).join("");
+  return `<svg class="candles" viewBox="0 0 ${w} ${h}">
+    <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${h-pad}" stroke="#3a3630"/>
+    <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="#3a3630"/>
+    ${bars}
+  </svg>`;
+}
+
+async function renderMain(){
+  const main = document.getElementById("main");
+  renderList();
+  if(!active){
+    main.innerHTML = `<h2>我的持仓</h2><p class="sub">添加一个真实标的，查看快照和走势</p>
+    <div class="card">先点左上角菜单，添加一个自选，比如 A股代码 000001，或基金代码 110020。</div>`;
+    return;
+  }
+  const w = watchlist.find(x=>x.id===active);
+  main.innerHTML = `<h2>我的持仓</h2><p class="sub">数据来自本地 AkShare 后端</p>
+    <div class="card" id="quoteCard">加载中…</div>
+    <div class="card" id="chartCard"></div>
+    <div class="card" id="explainCard"></div>`;
+
+  try{
+    const q = await fetch(`${API}/api/quote?market=${w.market}&code=${encodeURIComponent(w.code)}`, {
+      headers: API_KEY ? {"X-API-Key": API_KEY} : {}
+    }).then(r=>{
+      if(!r.ok) throw new Error("后端返回错误 "+r.status); return r.json();
+    });
+    const up = q.change_pct>=0;
+    const sinceCost = w.cost ? pct(q.price, w.cost) : null;
+    document.getElementById("quoteCard").innerHTML = `
+      <div class="row">
+        <div>
+          <div class="serif" style="font-size:18px;">${q.name || w.name}</div>
+          <div class="tape" style="font-size:11.5px;opacity:.45;margin-top:4px;">${w.code} · ${MARKET_LABEL[w.market]} ${w.cost?`· 成本 ${fmt(w.cost)}`:""}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="tape price ${up?'up':'down'}">${fmt(q.price)}</div>
+          <div class="tape ${up?'up':'down'}" style="font-size:13px;">${up?'+':''}${fmt(q.change_pct)}%</div>
+        </div>
+      </div>`;
+
+    document.getElementById("chartCard").innerHTML = sinceCost!==null ? `
+        <div class="grid2" style="margin-bottom:16px;">
+          <div><div class="label">较成本涨跌幅</div><div class="tape price ${sinceCost>=0?'up':'down'}" style="font-size:20px;">${sinceCost>=0?'+':''}${fmt(sinceCost)}%</div>
+          <div class="formula">(现价−成本价)÷成本价×100%</div></div>
+          <div><div class="label">当日涨跌幅</div><div class="tape price ${up?'up':'down'}" style="font-size:20px;">${up?'+':''}${fmt(q.change_pct)}%</div>
+          <div class="formula">(今收−昨收)÷昨收×100%</div></div>
+        </div>
+        <div id="candleWrap">走势加载中…</div>` : `<div id="candleWrap">走势加载中…</div>`;
+
+    if(w.market==="a" || w.market==="fund" || w.market==="etf"){
+      const h = await fetch(`${API}/api/hist?market=${w.market}&code=${encodeURIComponent(w.code)}&days=40`, {
+        headers: API_KEY ? {"X-API-Key": API_KEY} : {}
+      }).then(r=>{
+        if(!r.ok) throw new Error("历史数据请求失败 "+r.status); return r.json();
+      });
+      document.getElementById("candleWrap").innerHTML = drawCandles(h.series);
+    } else {
+      document.getElementById("candleWrap").innerHTML = `<div class="hint">指数暂不支持K线，仅展示最新快照。</div>`;
+    }
+
+    document.getElementById("explainCard").innerHTML = `
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">给完全不懂的人讲人话</div>
+      <p style="font-size:14px;line-height:1.9;opacity:.85;">
+        当前${up?"上涨":"下跌"} <span class="tape">${fmt(Math.abs(q.change_pct))}%</span>，
+        ${sinceCost!==null ? `相对你的成本${sinceCost>=0?"是浮盈":"是浮亏"} <span class="tape">${fmt(Math.abs(sinceCost))}%</span>，卖出前都只是账面数字。` : "还没填成本价，添加时补上就能看到相对你买入价的盈亏。"}
+        单日 ±1%~3% 是常见波动，不必因为一天涨跌就做决定。
+      </p>`;
+  } catch(e){
+    document.getElementById("quoteCard").innerHTML = `<div class="err">获取失败：${e.message}<br>点右上角 ⚙ 检查后端地址和 API Key 是否正确；免费云服务闲置后首次唤醒要等30~50秒，也可能是这个原因。</div>`;
+    document.getElementById("chartCard").innerHTML = "";
+    document.getElementById("explainCard").innerHTML = "";
+  }
+}
+
+renderList();
+renderMain();
+</script>
+</body>
+</html>
