@@ -272,7 +272,11 @@ async function renderNews(force){
   if(newsCache && !force){ renderNewsList(newsCache); return; }
   try{
     const r = await fetch(`${API}/api/news`, {headers: authHeaders()});
-    if(!r.ok) throw new Error("后端返回错误 "+r.status);
+    if(!r.ok){
+      let msg = "后端返回错误 "+r.status;
+      try{ const j = await r.json(); if(j.detail) msg = j.detail; }catch{}
+      throw new Error(msg);
+    }
     const data = await r.json();
     newsCache = data.items || [];
     renderNewsList(newsCache);
