@@ -20,21 +20,13 @@
   .tape{font-family:'JetBrains Mono',ui-monospace,monospace;letter-spacing:.02em;}
   .serif{font-family:'Noto Serif SC',serif;font-weight:700;}
 
-  .topbar{
-    position:sticky; top:0; z-index:15;
-    display:flex; align-items:center; gap:12px;
-    padding: calc(var(--safe-t) + 12px) 16px 12px;
-    background:#14120Fee; backdrop-filter: blur(6px);
-    border-bottom:1px solid var(--line);
-  }
-  .topbar .burger{
-    width:38px;height:38px;border-radius:8px;border:1px solid var(--line2);
-    background:#1B1814;display:flex;align-items:center;justify-content:center;
-    flex-shrink:0; cursor:pointer;
-  }
+  .topbar{position:sticky; top:0; z-index:15; display:flex; align-items:center; gap:12px;
+    padding: calc(var(--safe-t) + 12px) 16px 12px; background:#14120Fee; backdrop-filter: blur(6px);
+    border-bottom:1px solid var(--line);}
+  .topbar .burger{width:38px;height:38px;border-radius:8px;border:1px solid var(--line2);
+    background:#1B1814;display:flex;align-items:center;justify-content:center; flex-shrink:0; cursor:pointer;}
   .topbar .burger span, .topbar .burger span::before, .topbar .burger span::after{
-    content:""; display:block; width:16px; height:2px; background:var(--gold); position:relative;
-  }
+    content:""; display:block; width:16px; height:2px; background:var(--gold); position:relative;}
   .topbar .burger span::before{ position:absolute; top:-5px; }
   .topbar .burger span::after{ position:absolute; top:5px; }
   .topbar .title{display:flex;align-items:baseline;gap:6px;}
@@ -42,32 +34,23 @@
   .topbar .title .t{font-size:14px;opacity:.85;}
   .topbar .gear{margin-left:auto;opacity:.55;cursor:pointer;font-size:18px;background:none;border:none;color:var(--text);}
 
-  .scrim{ position:fixed; inset:0; background:#000000a0; z-index:24; opacity:0; pointer-events:none; transition:opacity .25s ease; }
+  .scrim{position:fixed; inset:0; background:#000000a0; z-index:24; opacity:0; pointer-events:none; transition:opacity .25s ease;}
   .scrim.open{ opacity:1; pointer-events:auto; }
-  aside{
-    position:fixed; top:0; bottom:0; left:0; width:82vw; max-width:320px; z-index:25;
-    background:var(--bg); border-right:1px solid var(--line);
-    display:flex; flex-direction:column;
+  aside{position:fixed; top:0; bottom:0; left:0; width:82vw; max-width:320px; z-index:25;
+    background:var(--bg); border-right:1px solid var(--line); display:flex; flex-direction:column;
     transform:translateX(-100%); transition:transform .25s ease;
-    padding-top:var(--safe-t); padding-bottom:var(--safe-b);
-  }
+    padding-top:var(--safe-t); padding-bottom:var(--safe-b);}
   aside.open{ transform:translateX(0); }
   .brand{padding:20px 20px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
-  .brand .n{color:var(--gold);font-size:26px;}
-  .brand .t{font-size:16px;margin-left:6px;}
+  .brand .n{color:var(--gold);font-size:26px;} .brand .t{font-size:16px;margin-left:6px;}
   .brand .close{background:none;border:none;color:var(--text);opacity:.5;font-size:20px;cursor:pointer;padding:4px 8px;}
+  .navitem{display:flex;align-items:center;gap:10px;padding:13px 18px;cursor:pointer;font-size:14px;border-left:3px solid transparent;}
+  .navitem.active{background:#211D17;border-left-color:var(--gold);color:var(--gold);}
+  .navsub{font-size:10.5px;opacity:.45;}
   .datestr{padding:10px 20px 0;opacity:.45;font-size:11px;}
-
-  .navlist{padding:14px 12px 4px;display:flex;flex-direction:column;gap:4px;}
-  .navitem{display:flex;align-items:center;gap:10px;padding:12px;border-radius:8px;cursor:pointer;border:1px solid transparent;background:transparent;text-align:left;}
-  .navitem.active{background:#26211A;border-color:#C9A24B55;}
-  .navitem .ic{width:18px;text-align:center;opacity:.8;}
-  .navitem .lb{font-size:13.5px;font-weight:500;}
-  .navitem .sb{font-size:10.5px;opacity:.45;margin-top:1px;}
-
   .addbar{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 8px;font-size:11px;opacity:.5;text-transform:uppercase;letter-spacing:.05em;}
   .addbar button{background:none;border:none;color:var(--text);opacity:.8;cursor:pointer;font-size:20px;line-height:1;}
-  .list{flex:0 1 auto;overflow-y:auto;padding:0 12px;max-height:32vh;-webkit-overflow-scrolling:touch;}
+  .list{overflow-y:auto;padding:0 12px;max-height:26vh;-webkit-overflow-scrolling:touch;}
   .item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;cursor:pointer;font-size:13.5px;}
   .item:active{background:#211D17;}
   .item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -76,31 +59,33 @@
   .foot{padding:14px 20px;border-top:1px solid var(--line);font-size:10px;opacity:.35;line-height:1.6;margin-top:auto;}
 
   main{padding:20px 16px calc(24px + var(--safe-b));max-width:720px;margin:0 auto;}
-  h2{font-size:20px;margin:4px 0 4px;}
+  h2{font-size:20px;margin:4px 0 4px;} .subttl{opacity:.5;font-size:12.5px;margin:0 0 4px;}
   .sub{opacity:.5;font-size:12.5px;margin:0 0 18px;}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px;}
   .row{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;}
-  .price{font-size:27px;}
-  .up{color:var(--up);} .down{color:var(--down);}
+  .price{font-size:27px;} .up{color:var(--up);} .down{color:var(--down);}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  .label{font-size:11px;opacity:.5;}
-  .formula{font-size:10px;opacity:.4;margin-top:8px;}
+  .label{font-size:11px;opacity:.5;} .formula{font-size:10px;opacity:.4;margin-top:8px;}
   select,input{background:transparent;border:1px solid var(--line2);color:var(--text);border-radius:8px;padding:11px 12px;font-size:15px;width:100%;}
   .btn{background:var(--gold);color:#1B1814;border:none;border-radius:8px;padding:12px 16px;font-size:14px;font-weight:600;cursor:pointer;width:100%;}
   .btn.ghost{background:#26211A;color:var(--gold);border:1px solid #C9A24B55;}
-  .btn.small{width:auto;padding:9px 14px;font-size:13px;}
+  .btn.small{width:auto;padding:9px 14px;}
   .modal-bg{position:fixed;inset:0;background:#00000090;display:flex;align-items:flex-end;justify-content:center;z-index:30;}
   .modal{background:var(--card);border:1px solid var(--line);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + var(--safe-b));width:100%;max-width:480px;}
-  .modal h3{margin:0 0 14px;}
-  .modal .f{display:flex;flex-direction:column;gap:10px;}
+  .modal h3{margin:0 0 14px;} .modal .f{display:flex;flex-direction:column;gap:10px;}
   .err{color:var(--down);font-size:12px;margin-top:8px;line-height:1.6;}
   svg.candles{width:100%;height:auto;}
-  .chip{display:inline-block;font-size:10px;padding:2px 8px;border-radius:999px;margin:0 4px 4px 0;}
-  .newsitem{padding:12px 0;border-bottom:1px solid var(--line);}
-  .newsitem:last-child{border-bottom:none;}
+  .chip{font-size:10px;padding:2px 8px;border-radius:999px;font-family:'JetBrains Mono',monospace;}
+  .newsItem{cursor:pointer;}
+  .newsDetail{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+  .newsDetail.open{max-height:600px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line2);}
+  .goldtext{color:var(--gold);}
+  .segrow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;}
+  .seg{flex-shrink:0;padding:7px 14px;border-radius:999px;font-size:12.5px;white-space:nowrap;border:1px solid var(--line2);}
+  .seg.active{border-color:var(--gold);color:var(--gold);background:#26211A;}
 
   @media (min-width: 860px){
-    body.wide aside{ position:sticky; transform:none; width:280px; }
+    body.wide aside{ position:sticky; transform:none; width:300px; height:100vh; }
     body.wide .scrim{ display:none; }
     body.wide .app{ display:flex; }
     body.wide main{ margin:0; flex:1; padding:32px 40px; max-width:none; }
@@ -124,11 +109,21 @@
     </div>
     <div class="datestr tape" id="today"></div>
 
-    <div class="navlist" id="navlist"></div>
+    <div style="padding:14px 8px 4px;">
+      <div class="navitem" id="nav-news" onclick="goSection('news')">
+        <div><div>今天关注</div><div class="navsub">真实财经快讯 · 分类 · 关联标的</div></div>
+      </div>
+      <div class="navitem" id="nav-holdings" onclick="goSection('holdings')">
+        <div><div>我的持仓</div><div class="navsub">走势 · K线 · 白话讲解</div></div>
+      </div>
+      <div class="navitem" id="nav-pick" onclick="goSection('pick')">
+        <div><div>每日一支</div><div class="navsub">真实财报数据拆解</div></div>
+      </div>
+    </div>
 
     <div class="addbar"><span>自选清单</span><button onclick="openAdd()">＋</button></div>
     <div class="list" id="list"></div>
-    <div class="hint">数据来自 AkShare（东方财富/新浪财经公开接口），分钟级/日级更新，非逐笔实时，仅供个人参考。</div>
+    <div class="hint">数据来自 AkShare（东方财富/新浪财经公开接口），分钟级/日级更新，非逐笔实时，仅供个人参考，不构成投资建议。</div>
     <div class="foot" id="apiFoot"></div>
   </aside>
   <main id="main"></main>
@@ -158,10 +153,7 @@
   <div class="modal">
     <h3 class="serif">后端地址</h3>
     <div class="f">
-      <div class="hint" style="padding:0 0 4px;">
-        填你部署在云端的后端网址（形如 https://xxx.onrender.com），
-        以及部署时设置的 API Key（没设就留空）。
-      </div>
+      <div class="hint" style="padding:0 0 4px;">填你部署在云端的后端网址和 API Key。</div>
       <input id="s_api" placeholder="https://xxx.onrender.com" />
       <input id="s_key" placeholder="API Key（如果设置了的话）" />
       <button class="btn" onclick="saveSettings()">保存</button>
@@ -177,9 +169,9 @@ let API_KEY = localStorage.getItem("apiKey77") || "";
 let watchlist = JSON.parse(localStorage.getItem("wl77") || "[]");
 let active = watchlist[0]?.id || null;
 let section = "news";
+let newsCache = null, pickCache = null;
 
 if(window.innerWidth >= 860) document.body.classList.add("wide");
-
 document.getElementById("today").textContent = new Date().toLocaleDateString("zh-CN",{year:"numeric",month:"long",day:"numeric",weekday:"short"});
 document.getElementById("apiFoot").textContent = "后端地址：" + API;
 
@@ -201,8 +193,7 @@ function saveSettings(){
   API = v; localStorage.setItem("apiBase77", API);
   API_KEY = document.getElementById("s_key").value.trim(); localStorage.setItem("apiKey77", API_KEY);
   document.getElementById("apiFoot").textContent = "后端地址：" + API;
-  closeSettings();
-  render();
+  closeSettings(); renderMain();
 }
 
 function saveWL(){ localStorage.setItem("wl77", JSON.stringify(watchlist)); renderList(); }
@@ -217,35 +208,18 @@ async function addHolding(){
   if(!code){ document.getElementById("addErr").textContent="请填代码/关键词"; return; }
   const id = market+":"+code+":"+Date.now();
   watchlist.push({id, market, code, name: nameIn || code, cost});
-  saveWL();
-  active = id;
-  closeAdd();
-  closeDrawer();
+  saveWL(); active = id; closeAdd(); closeDrawer();
   goSection("holdings");
 }
 function removeHolding(id){
-  watchlist = watchlist.filter(w=>w.id!==id);
-  saveWL();
+  watchlist = watchlist.filter(w=>w.id!==id); saveWL();
   if(active===id) active = watchlist[0]?.id || null;
-  if(section==="holdings") render();
+  if(section==="holdings") renderMain();
 }
 
 const MARKET_LABEL = {a:"A股", fund:"基金", etf:"ETF", index:"指数"};
 const MARKET_COLOR = {a:"#C0433E", fund:"#8A6AC0", etf:"#4C8A6A", index:"#5B9AA6"};
-const NAV = [
-  {id:"news", label:"今天关注", sub:"真实财经快讯 + 指数快照", ic:"📰"},
-  {id:"holdings", label:"我的持仓", sub:"走势 · K线 · 白话讲解", ic:"💼"},
-  {id:"pick", label:"每日一支", sub:"四点法看懂一家公司", ic:"⭐"},
-];
-
-function renderNav(){
-  document.getElementById("navlist").innerHTML = NAV.map(n=>`
-    <button class="navitem ${section===n.id?'active':''}" onclick="goSection('${n.id}')">
-      <span class="ic">${n.ic}</span>
-      <span><span class="lb">${n.label}</span><br/><span class="sb">${n.sub}</span></span>
-    </button>`).join("");
-}
-function goSection(id){ section=id; closeDrawer(); render(); }
+const CAT_COLOR = {"A股":"#C0433E","美股":"#3E6FC0","日经":"#B98A3B",ETF:"#4C8A6A",FOF:"#8A6AC0",LOF:"#C0894C",QDII:"#5B9AA6"};
 
 function renderList(){
   const el = document.getElementById("list");
@@ -258,6 +232,12 @@ function renderList(){
     </div>`).join("");
 }
 function selectItem(id){ active = id; goSection("holdings"); }
+function goSection(s){ section = s; closeDrawer(); updateNavActive(); renderMain(); }
+function updateNavActive(){
+  ["news","holdings","pick"].forEach(s=>{
+    document.getElementById("nav-"+s).classList.toggle("active", s===section);
+  });
+}
 
 function pct(a,b){ return b===0?0:((a-b)/b)*100; }
 function fmt(n,d=2){ return Number(n).toFixed(d); }
@@ -284,74 +264,45 @@ function drawCandles(series){
   </svg>`;
 }
 
-function render(){
-  renderNav();
-  renderList();
-  if(section==="news") renderNews();
-  else if(section==="pick") renderPick();
-  else renderHoldings();
-}
-
 /* ---------------- 今天关注 ---------------- */
-async function renderNews(){
+async function renderNews(force){
   const main = document.getElementById("main");
-  main.innerHTML = `<h2>今天关注</h2><p class="sub">真实财经快讯 + 主要指数当日真实涨跌</p>
-    <div class="card" id="newsCard">加载中…</div>`;
+  main.innerHTML = `<h2>今天关注</h2><p class="sub">真实财经快讯，自动分类并关联相关基金代码，点标题展开摘要</p>
+    <div id="newsBody">${newsCache && !force ? "" : "加载中…"}</div>`;
+  if(newsCache && !force){ renderNewsList(newsCache); return; }
   try{
     const r = await fetch(`${API}/api/news`, {headers: authHeaders()});
     if(!r.ok) throw new Error("后端返回错误 "+r.status);
-    const d = await r.json();
-    let snapHtml = "";
-    if(d.snapshot && d.snapshot.length){
-      snapHtml = `<div class="grid2" style="margin-bottom:16px;">` + d.snapshot.map(s=>`
-        <div><div class="label">${s.name}</div>
-        <div class="tape price ${s.change_pct>=0?'up':'down'}" style="font-size:18px;">${s.change_pct>=0?'+':''}${fmt(s.change_pct)}%</div></div>
-      `).join("") + `</div>`;
-    }
-    let newsHtml = (d.items||[]).map(it=>`
-      <div class="newsitem">
-        <div style="font-size:13.5px;line-height:1.6;">${it.title}</div>
-        <div style="margin-top:4px;">
-          <span class="tape" style="font-size:10px;opacity:.4;">${it.time}</span>
-          ${(it.cats||[]).map(c=>`<span class="chip tape" style="background:#C9A24B22;color:#C9A24B;border:1px solid #C9A24B55;">${c}</span>`).join("")}
+    const data = await r.json();
+    newsCache = data.items || [];
+    renderNewsList(newsCache);
+  }catch(e){
+    document.getElementById("newsBody").innerHTML = `<div class="card err">获取失败：${e.message}<br>点右上角 ⚙ 检查后端地址/Key，或去 Render 后台看 Logs 里的具体报错。</div>`;
+  }
+}
+function renderNewsList(items){
+  if(!items.length){ document.getElementById("newsBody").innerHTML = `<div class="card hint">暂时没有抓到快讯，稍后重试。</div>`; return; }
+  document.getElementById("newsBody").innerHTML = items.map((it,idx)=>`
+    <div class="card newsItem" onclick="toggleNews(${idx})">
+      <div class="row">
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;">${it.headline}</div>
+          <div class="tape" style="font-size:10.5px;opacity:.4;margin-top:4px;">${it.time}</div>
         </div>
-      </div>`).join("");
-    document.getElementById("newsCard").innerHTML = snapHtml + (newsHtml || "<div class='hint'>暂无快讯</div>");
-  } catch(e){
-    document.getElementById("newsCard").innerHTML = `<div class="err">获取失败：${e.message}<br>点右上角 ⚙ 检查后端地址/Key；免费云服务闲置后首次唤醒要等30~50秒。</div>`;
-  }
-}
-
-/* ---------------- 每日一支 ---------------- */
-async function renderPick(){
-  const main = document.getElementById("main");
-  main.innerHTML = `<h2>每日一支</h2><p class="sub">用真实财报数据拆解一家公司，不是 AI 编的点评</p>
-    <div class="card" id="pickCard">加载中…</div>`;
-  try{
-    const r = await fetch(`${API}/api/pick`, {headers: authHeaders()});
-    if(!r.ok) throw new Error("后端返回错误 "+r.status);
-    const d = await r.json();
-    document.getElementById("pickCard").outerHTML = `
-      <div class="card">
-        <div class="serif" style="font-size:19px;">${d.name}</div>
-        <div class="tape" style="font-size:11.5px;opacity:.45;margin-top:4px;">${d.code} · 所属行业：${d.industry}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+          ${(it.cats||[]).map(c=>`<span class="chip" style="background:${CAT_COLOR[c]}22;color:${CAT_COLOR[c]};border:1px solid ${CAT_COLOR[c]}55">${c}</span>`).join("")}
+        </div>
       </div>
-      ${fourPointCard("1 · 赚不赚钱", "持续在赚钱，靠真实利润和现金流，不是融资续命", d.profit.verdict)}
-      ${fourPointCard("2 · 别人抢不抢得走生意", "护城河代理：ROE 在同行业中的真实排名", d.moat.verdict)}
-      ${fourPointCard("3 · 行业是不是在变大", "营业收入同比增速 vs 行业平均（真实数据）", d.industry_growth.verdict)}
-      ${fourPointCard("4 · 到底怎么赚的钱", "真实的主营业务收入构成", d.howtomoney.verdict)}
-      <div class="hint" style="margin-top:4px;">换一支：在网址后面加 ?symbol=股票代码 手动指定，比如换成 000858。</div>
-    `;
-  } catch(e){
-    document.getElementById("pickCard").innerHTML = `<div class="err">获取失败：${e.message}<br>点右上角 ⚙ 检查后端地址/Key。</div>`;
-  }
+      <div class="newsDetail" id="nd-${idx}">
+        <div style="font-size:13px;line-height:1.8;opacity:.85;">${it.detail}</div>
+        <div class="tape" style="font-size:11px;margin-top:8px;" class="goldtext">关联标的：${it.related}</div>
+        ${it.link ? `<a href="${it.link}" target="_blank" style="font-size:11px;color:#C9A24B;display:block;margin-top:6px;">查看原文 →</a>` : ""}
+      </div>
+    </div>`).join("");
 }
-function fourPointCard(title, sub, verdict){
-  return `<div class="card">
-    <div style="font-size:14px;font-weight:600;">${title}</div>
-    <div style="font-size:11px;opacity:.4;margin:2px 0 10px;">${sub}</div>
-    <div style="font-size:13.5px;line-height:1.8;">${verdict}</div>
-  </div>`;
+function toggleNews(idx){
+  const el = document.getElementById("nd-"+idx);
+  el.classList.toggle("open");
 }
 
 /* ---------------- 我的持仓 ---------------- */
@@ -362,16 +313,13 @@ async function renderHoldings(){
     <div class="card">先点左上角菜单，添加一个自选，比如 A股代码 000001，或基金代码 110020。</div>`;
     return;
   }
-  if(!active) active = watchlist[0].id;
-  const w = watchlist.find(x=>x.id===active);
+  const w = watchlist.find(x=>x.id===active) || watchlist[0];
+  active = w.id;
   main.innerHTML = `<h2>我的持仓</h2><p class="sub">数据来自本地 AkShare 后端</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-      ${watchlist.map(x=>`<button class="btn small ${x.id===active?'':'ghost'}" onclick="active='${x.id}';renderHoldings();">${x.name}</button>`).join("")}
-    </div>
+    <div class="segrow">${watchlist.map(x=>`<div class="seg ${x.id===active?'active':''}" onclick="selectItem('${x.id}')">${x.name}</div>`).join("")}</div>
     <div class="card" id="quoteCard">加载中…</div>
     <div class="card" id="chartCard"></div>
     <div class="card" id="explainCard"></div>`;
-
   try{
     const q = await fetch(`${API}/api/quote?market=${w.market}&code=${encodeURIComponent(w.code)}`, {headers: authHeaders()}).then(r=>{
       if(!r.ok) throw new Error("后端返回错误 "+r.status); return r.json();
@@ -380,25 +328,18 @@ async function renderHoldings(){
     const sinceCost = w.cost ? pct(q.price, w.cost) : null;
     document.getElementById("quoteCard").innerHTML = `
       <div class="row">
-        <div>
-          <div class="serif" style="font-size:18px;">${q.name || w.name}</div>
-          <div class="tape" style="font-size:11.5px;opacity:.45;margin-top:4px;">${w.code} · ${MARKET_LABEL[w.market]} ${w.cost?`· 成本 ${fmt(w.cost)}`:""}</div>
-        </div>
-        <div style="text-align:right;">
-          <div class="tape price ${up?'up':'down'}">${fmt(q.price)}</div>
-          <div class="tape ${up?'up':'down'}" style="font-size:13px;">${up?'+':''}${fmt(q.change_pct)}%</div>
-        </div>
+        <div><div class="serif" style="font-size:18px;">${q.name || w.name}</div>
+        <div class="tape" style="font-size:11.5px;opacity:.45;margin-top:4px;">${w.code} · ${MARKET_LABEL[w.market]} ${w.cost?`· 成本 ${fmt(w.cost)}`:""}</div></div>
+        <div style="text-align:right;"><div class="tape price ${up?'up':'down'}">${fmt(q.price)}</div>
+        <div class="tape ${up?'up':'down'}" style="font-size:13px;">${up?'+':''}${fmt(q.change_pct)}%</div></div>
       </div>`;
-
     document.getElementById("chartCard").innerHTML = sinceCost!==null ? `
         <div class="grid2" style="margin-bottom:16px;">
           <div><div class="label">较成本涨跌幅</div><div class="tape price ${sinceCost>=0?'up':'down'}" style="font-size:20px;">${sinceCost>=0?'+':''}${fmt(sinceCost)}%</div>
           <div class="formula">(现价−成本价)÷成本价×100%</div></div>
           <div><div class="label">当日涨跌幅</div><div class="tape price ${up?'up':'down'}" style="font-size:20px;">${up?'+':''}${fmt(q.change_pct)}%</div>
           <div class="formula">(今收−昨收)÷昨收×100%</div></div>
-        </div>
-        <div id="candleWrap">走势加载中…</div>` : `<div id="candleWrap">走势加载中…</div>`;
-
+        </div><div id="candleWrap">走势加载中…</div>` : `<div id="candleWrap">走势加载中…</div>`;
     if(w.market==="a" || w.market==="fund" || w.market==="etf"){
       const h = await fetch(`${API}/api/hist?market=${w.market}&code=${encodeURIComponent(w.code)}&days=40`, {headers: authHeaders()}).then(r=>{
         if(!r.ok) throw new Error("历史数据请求失败 "+r.status); return r.json();
@@ -407,7 +348,6 @@ async function renderHoldings(){
     } else {
       document.getElementById("candleWrap").innerHTML = `<div class="hint">指数暂不支持K线，仅展示最新快照。</div>`;
     }
-
     document.getElementById("explainCard").innerHTML = `
       <div style="font-size:13px;font-weight:600;margin-bottom:8px;">给完全不懂的人讲人话</div>
       <p style="font-size:14px;line-height:1.9;opacity:.85;">
@@ -416,13 +356,66 @@ async function renderHoldings(){
         单日 ±1%~3% 是常见波动，不必因为一天涨跌就做决定。
       </p>`;
   } catch(e){
-    document.getElementById("quoteCard").innerHTML = `<div class="err">获取失败：${e.message}<br>点右上角 ⚙ 检查后端地址和 API Key 是否正确；免费云服务闲置后首次唤醒要等30~50秒。</div>`;
-    document.getElementById("chartCard").innerHTML = "";
-    document.getElementById("explainCard").innerHTML = "";
+    document.getElementById("quoteCard").innerHTML = `<div class="err">获取失败：${e.message}<br>点右上角 ⚙ 检查后端地址和 API Key；免费云服务闲置后首次唤醒要等30~50秒。</div>`;
+    document.getElementById("chartCard").innerHTML = ""; document.getElementById("explainCard").innerHTML = "";
   }
 }
 
-render();
+/* ---------------- 每日一支 ---------------- */
+async function renderPick(force){
+  const main = document.getElementById("main");
+  main.innerHTML = `<h2>每日一支</h2><p class="sub">用真实财报数据拆解一家公司，不是 AI 编的点评</p>
+    <div id="pickBody">${pickCache && !force ? "" : "加载中…"}</div>`;
+  if(pickCache && !force){ renderPickBody(pickCache); return; }
+  try{
+    const r = await fetch(`${API}/api/pick`, {headers: authHeaders()});
+    if(!r.ok){
+      let msg = "后端返回错误 "+r.status;
+      try{ const j = await r.json(); if(j.detail) msg = j.detail; }catch{}
+      throw new Error(msg);
+    }
+    pickCache = await r.json();
+    renderPickBody(pickCache);
+  }catch(e){
+    document.getElementById("pickBody").innerHTML = `<div class="card err">获取失败：${e.message}<br>这条通常是财报接口字段对不上导致的，去 Render 后台 Logs 里能看到具体哪一行报错，发给我我可以针对性修。</div>`;
+  }
+}
+function fourPointCard(title, sub, d){
+  if(!d) return "";
+  return `<div class="card"><div style="font-size:13.5px;font-weight:600;">${title}</div>
+    <div style="font-size:10.5px;opacity:.4;margin:2px 0 10px;">${sub}</div>
+    <p style="font-size:13.5px;line-height:1.8;">${d.verdict}</p>
+    <p class="tape" style="font-size:11.5px;opacity:.6;margin-top:8px;line-height:1.7;">${d.data}</p></div>`;
+}
+function renderPickBody(p){
+  document.getElementById("pickBody").innerHTML = `
+    <div class="card">
+      <div class="serif" style="font-size:19px;">${p.name}</div>
+      <div class="tape" style="font-size:11px;opacity:.45;margin-top:2px;">${p.code} · ${p.cat} · 报告期 ${p.report_date}</div>
+      <p style="font-size:13.5px;line-height:1.8;margin-top:10px;">${p.one_liner}</p>
+    </div>
+    ${fourPointCard("1 · 赚不赚钱","持续在赚钱，靠真实利润和现金流，不是融资续命", p.profit)}
+    ${fourPointCard("2 · 别人抢不抢得走生意","护城河：竞争对手是否容易复制它的优势", p.moat)}
+    ${fourPointCard("3 · 行业是不是在变大","赛道空间：池子在不在持续扩大", p.industry)}
+    ${fourPointCard("4 · 到底怎么赚的钱","只买看得懂的生意，说清楚收入从哪来", p.howtomoney)}
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">关键结论（数据点出处）</div>
+      <ul style="font-size:13px;line-height:1.9;opacity:.85;padding-left:18px;">
+        ${(p.key_takeaway||[]).map(k=>`<li>${k}</li>`).join("")}
+      </ul>
+      <div class="tape" style="font-size:11px;margin-top:10px;opacity:.55;">${p.risk}</div>
+    </div>`;
+}
+
+function renderMain(){
+  renderList();
+  updateNavActive();
+  if(section==="news") renderNews(false);
+  else if(section==="holdings") renderHoldings();
+  else if(section==="pick") renderPick(false);
+}
+
+renderMain();
 </script>
 </body>
 </html>
