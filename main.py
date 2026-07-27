@@ -172,3 +172,177 @@ def hist(market: str = Query(...), code: str = Query(...), days: int = 60, _=Dep
         raise
     except Exception as e:
         raise HTTPException(500, f"抓取失败：{e}")
+
+
+# ---------------------------------------------------------------
+# 今天关注：真实财经快讯 + 真实指数快照（不用 AI 生成，全部是抓来的原始数据）
+# ---------------------------------------------------------------
+CAT_KEYWORDS = {
+    "A股": ["A股", "上证", "深证", "沪深", "创业板", "科创板", "北交所", "沪指", "深指"],
+    "美股": ["美股", "纳斯达克", "道指", "标普", "美联储", "美国", "华尔街"],
+    "日经": ["日经", "日本", "日元", "东京"],
+    "ETF": ["ETF", "指数基金"],
+    "FOF": ["FOF"],
+    "LOF": ["LOF"],
+    "QDII": ["QDII", "海外基金", "跨境"],
+}
+
+
+def tag_categories(title: str):
+    hit = [cat for cat, kws in CAT_KEYWORDS.items() if any(k in title for k in kws)]
+    return hit
+
+
+@app.get("/api/news")
+def news(_=Depends(check_key)):
+    """真实财经快讯（东方财富-全球资讯）+ 几个关键指数的真实当日涨跌，作为“影响”的量化参考。"""
+    try:
+        try:
+            df = ak.stock_info_global_em()
+        except Exception:
+            df = ak.stock_info_cjzc_em()  # 备用：东方财富-财经早餐
+        df = df.head(15)
+        title_col = "标题" if "标题" in df.columns else df.columns[0]
+        time_col = "发布时间" if "发布时间" in df.columns else (df.columns[1] if len(df.columns) > 1 else None)
+        items = []
+        for _, r in df.iterrows():
+            title = str(r.get(title_col, "")).strip()
+            if not title:
+                continue
+            items.append({
+                "title": title,
+                "time": str(r.get(time_col, "")) if time_col else "",
+                "cats": tag_categories(title),
+            })
+
+        # 指数快照：作为“对投资圈影响”的真实量化参照，而不是编的文字总结
+        snapshot = []
+        try:
+            idx = ak.stock_zh_index_spot_em()
+            for name, key in [("上证指数", "上证指数"), ("深证成指", "深证成指"), ("创业板指", "创业板指")]:
+                row = idx[idx["名称"] == key]
+                if not row.empty:
+                    r = row.iloc[0]
+                    snapshot.append({"name": name, "price": float(r["最新价"]), "change_pct": float(r["涨跌幅"])})
+        except Exception:
+            pass
+        try:
+            gidx = ak.index_global_spot_em()
+            for kw, label in [("日经", "日经225"), ("道琼斯", "道琼斯"), ("纳斯达克", "纳斯达克")]:
+                row = gidx[gidx["名称"].str.contains(kw, na=False)]
+                if not row.empty:
+                    r = row.iloc[0]
+                    snapshot.append({"name": label, "price": float(r["最新价"]), "change_pct": float(r["涨跌幅"])})
+        except Exception:
+            pass
+
+        return {"items": items, "snapshot": snapshot}
+    except Exception as e:
+        raise HTTPException(500, f"抓取失败：{e}")
+
+
+# ---------------------------------------------------------------
+# 每日一支：从真实财报数据里按“四点法”组织，不是 AI 编的判断
+# ---------------------------------------------------------------
+DEFAULT_POOL = ["600519", "000001", "600036", "000651", "601318", "300750", "000858", "600900"]
+
+
+def n(x):
+    try:
+        v = float(x)
+        return v if v == v else None  # filter NaN
+    except Exception:
+        return None
+
+
+@app.get("/api/pick")
+def pick(symbol: str = "", _=Depends(check_key)):
+    """
+    四点法真实数据版：
+    1) 赚不赚钱 —— 最新净利润 + 同比增长率（真实财报）
+    2) 护城河代理 —— ROE 在同行业中的真实排名
+    3) 行业变大 —— 营业收入同比增长率 vs 行业平均（真实数据）
+    4) 怎么赚钱 —— 真实的主营业务构成（收入分产品占比）
+    没有 AI 编的“点评”，结论都是从数字直接推出来的简单规则判断。
+    """
+    try:
+        code = symbol.strip() or DEFAULT_POOL[pd.Timestamp.today().dayofyear % len(DEFAULT_POOL)]
+
+        info = ak.stock_individual_info_em(symbol=code)
+        info_map = {str(r["item"]): r["value"] for _, r in info.iterrows()}
+        name = info_map.get("股票简称", code)
+        industry = info_map.get("行业", "未知")
+
+        ind = ak.stock_financial_analysis_indicator_em(symbol=code)
+
+        def latest(metric_name):
+            rows = ind[ind["指标名称"].astype(str).str.contains(metric_name, na=False)]
+            if rows.empty:
+                return None
+            r = rows.iloc[0]
+            return {
+                "period": str(r.get("报告期", "")),
+                "value": n(r.get("指标值")),
+                "yoy": n(r.get("同比增长率")),
+                "industry_avg": n(r.get("行业平均")),
+                "industry_rank": n(r.get("行业排名")),
+            }
+
+        revenue = latest("营业收入")
+        profit = latest("净利润")
+        roe = latest("ROE") or latest("净资产收益率")
+
+        try:
+            zygc = ak.stock_zygc_em(symbol=code)
+            zygc = zygc.sort_values(zygc.columns[zygc.columns.str.contains("收入").tolist().index(True)] if any(zygc.columns.str.contains("收入")) else zygc.columns[0], ascending=False).head(4)
+            biz_col = next((c for c in zygc.columns if "项目" in c or "产品" in c or "分类" in c), zygc.columns[0])
+            pct_col = next((c for c in zygc.columns if "占比" in c), None)
+            business = [
+                {"item": str(r[biz_col]), "pct": str(r[pct_col]) if pct_col else ""}
+                for _, r in zygc.iterrows()
+            ]
+        except Exception:
+            business = []
+
+        def profit_verdict():
+            if not profit or profit["value"] is None:
+                return "财报数据暂缺，换一支看看。"
+            v = profit["value"]
+            yoy = profit["yoy"]
+            base = f"最新报告期（{profit['period']}）净利润 {v:.2f}（同比{'+' if (yoy or 0) >= 0 else ''}{yoy:.1f}%）。" if yoy is not None else f"最新报告期（{profit['period']}）净利润 {v:.2f}。"
+            if v > 0 and (yoy or 0) >= 0:
+                return base + " 利润为正且同比在增长，属于持续盈利。"
+            elif v > 0:
+                return base + " 目前仍盈利，但同比在下滑，要留意趋势是否延续。"
+            else:
+                return base + " 最新报告期是亏损的，需要更谨慎看待。"
+
+        def moat_verdict():
+            if not roe or roe["industry_rank"] is None:
+                return "同行业排名数据暂缺。"
+            rank = roe["industry_rank"]
+            return f"ROE 同行业排名第 {int(rank)} 位（数字越小越靠前），{'排名靠前，盈利能力相对同行有优势' if rank <= 10 else '排名中等或靠后，护城河不算突出，自己再多确认一下'}。"
+
+        def industry_verdict():
+            if not revenue or revenue["yoy"] is None:
+                return "行业增速数据暂缺。"
+            yoy = revenue["yoy"]
+            avg = revenue.get("industry_avg")
+            cmp_txt = f"，行业平均为 {avg:.1f}%" if avg is not None else ""
+            return f"公司营业收入同比 {'+' if yoy >= 0 else ''}{yoy:.1f}%{cmp_txt}。{'跑赢行业平均' if (avg is not None and yoy > avg) else '大致与行业同步或偏弱' if avg is not None else ''}"
+
+        def biz_verdict():
+            if not business:
+                return "主营构成数据暂缺。"
+            parts = "、".join([f"{b['item']}({b['pct']})" for b in business if b['pct']])
+            return f"收入主要来自：{parts}" if parts else "主营构成数据暂缺。"
+
+        return {
+            "name": name, "code": code, "industry": industry,
+            "profit": {"verdict": profit_verdict(), "raw": profit},
+            "moat": {"verdict": moat_verdict(), "raw": roe},
+            "industry_growth": {"verdict": industry_verdict(), "raw": revenue},
+            "howtomoney": {"verdict": biz_verdict(), "raw": business},
+        }
+    except Exception as e:
+        raise HTTPException(500, f"抓取失败：{e}（换一支代码试试，用 ?symbol=600519 这种方式指定）")
