@@ -267,7 +267,7 @@ function drawCandles(series){
 /* ---------------- 今天关注 ---------------- */
 async function renderNews(force){
   const main = document.getElementById("main");
-  main.innerHTML = `<h2>今天关注</h2><p class="sub">真实财经快讯，自动分类并关联相关基金代码，点标题展开摘要</p>
+  main.innerHTML = `<h2>今天关注</h2><p class="sub">已过滤掉与股市/基金无关的快讯，点标题展开摘要、解读和关联标的</p>
     <div id="newsBody">${newsCache && !force ? "" : "加载中…"}</div>`;
   if(newsCache && !force){ renderNewsList(newsCache); return; }
   try{
@@ -295,7 +295,10 @@ function renderNewsList(items){
       </div>
       <div class="newsDetail" id="nd-${idx}">
         <div style="font-size:13px;line-height:1.8;opacity:.85;">${it.detail}</div>
-        <div class="tape" style="font-size:11px;margin-top:8px;" class="goldtext">关联标的：${it.related}</div>
+        <div style="font-size:12.5px;line-height:1.8;margin-top:10px;padding-top:10px;border-top:1px solid #3a352c55;">
+          <span class="goldtext">解读：</span>${it.interpretation || ""}
+        </div>
+        <div class="tape" style="font-size:11px;margin-top:8px;color:#C9A24B;">关联标的：${it.related}</div>
         ${it.link ? `<a href="${it.link}" target="_blank" style="font-size:11px;color:#C9A24B;display:block;margin-top:6px;">查看原文 →</a>` : ""}
       </div>
     </div>`).join("");

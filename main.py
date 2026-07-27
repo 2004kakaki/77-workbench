@@ -181,26 +181,92 @@ def classify_and_relate(text: str):
     return cats, related
 
 
+def build_name_index():
+    """代码-简称 全量列表，用来在新闻里识别提到了哪家上市公司。"""
+    try:
+        df = ak.stock_info_a_code_name()
+        return [(r["name"], r["code"]) for _, r in df.iterrows() if len(str(r["name"])) >= 3]
+    except Exception:
+        return []
+
+
+def find_mentioned_stocks(text: str, name_index, spot_df):
+    hits = []
+    for name, code in name_index:
+        if name in text:
+            row = spot_df[spot_df["代码"] == code]
+            if not row.empty:
+                pct = row.iloc[0].get("涨跌幅")
+                hits.append({"name": name, "code": code, "change_pct": float(pct) if pct is not None else None})
+        if len(hits) >= 3:
+            break
+    return hits
+
+
+MARKET_SIGNAL_KEYWORDS = [
+    "股", "基金", "ETF", "指数", "板块", "涨", "跌", "IPO", "上市", "回购", "增持", "减持",
+    "并购", "重组", "财报", "净利润", "营收", "业绩", "央行", "利率", "汇率", "关税", "制裁",
+    "监管", "融资", "债券", "期货", "原油", "黄金", "芯片", "半导体",
+]
+
+
+def is_market_relevant(text, cats, related, stocks):
+    if cats or related or stocks:
+        return True
+    return any(k in text for k in MARKET_SIGNAL_KEYWORDS)
+
+
+def make_interpretation(cats, related, stocks):
+    if stocks:
+        s = stocks[0]
+        if s["change_pct"] is not None:
+            direction = "上涨" if s["change_pct"] >= 0 else "下跌"
+            return (f"消息面提到了{s['name']}（{s['code']}），该股今日实际{direction} "
+                    f"{abs(s['change_pct']):.2f}%，可以理解为市场目前对这条消息的反应"
+                    f"{'偏正面' if s['change_pct']>=0 else '偏负面'}，但个股波动也可能混杂其他因素，"
+                    f"不能全部归因于这一条新闻。")
+    if related:
+        return f"这类消息通常影响相关板块的资金情绪，可以关注 {related[0]} 这类关联标的近期走势来交叉验证市场反应。"
+    if cats:
+        return f"这条消息和 {'、'.join(cats)} 板块相关，建议结合板块指数当日涨跌幅一起看，单条消息的影响力有限。"
+    return "这条消息对具体标的的传导路径不算直接，仅供了解背景。"
+
+
 @app.get("/api/news")
 def news(_=Depends(check_key)):
     try:
         df = cached("news_em", ak.stock_info_global_em, ttl=300)
-        df = df.head(20)
+        spot_df = cached("a_spot", ak.stock_zh_a_spot_em)
+        name_index = cached("name_index", build_name_index, ttl=3600)
+
         items = []
         for _, r in df.iterrows():
             title = str(r.get("标题", "")).strip()
             summary = str(r.get("摘要", "")).strip()
             pub_time = str(r.get("发布时间", ""))
             link = str(r.get("链接", ""))
-            cats, related = classify_and_relate(title + summary)
+            text = title + summary
+            cats, related = classify_and_relate(text)
+            stocks = find_mentioned_stocks(text, name_index, spot_df)
+
+            if not is_market_relevant(text, cats, related, stocks):
+                continue
+
+            stock_related = [f"{s['name']}({s['code']})" for s in stocks]
+            all_related = stock_related + related
+
             items.append({
                 "headline": title,
                 "time": pub_time,
                 "detail": summary or "（这条快讯没有更多摘要，点标题旁边的链接看原文）",
                 "link": link,
                 "cats": cats,
-                "related": "、".join(related) if related else "暂无对应标的",
+                "related": "、".join(all_related) if all_related else "暂无对应标的",
+                "interpretation": make_interpretation(cats, related, stocks),
             })
+            if len(items) >= 15:
+                break
+
         return {"items": items}
     except Exception as e:
         raise HTTPException(500, f"抓取新闻失败：{e}")
@@ -230,40 +296,80 @@ def _num(x):
         return None
 
 
+def _find_col(df, must_contain):
+    """按包含的子串找列名，兼容不同 akshare 版本的列名差异。"""
+    for c in df.columns:
+        if all(k in c for k in must_contain):
+            return c
+    return None
+
+
+def _recent_quarter_ends(n=4):
+    """最近 n 个季度末日期字符串，形如 '20250331'，最新的排在最前面。"""
+    today = date.today()
+    ends = []
+    y, m = today.year, today.month
+    q_months = [3, 6, 9, 12]
+    # 从当前月往前找最近一个已经过去的季度末
+    idx = 0
+    while len(ends) < n:
+        cand_year = y
+        # 找 <= 当前(y,m) 的季度月
+        candidates = [(y, qm) for qm in q_months if qm <= m] or [(y - 1, 12)]
+        cy, cm = candidates[-1]
+        day = 31 if cm == 12 else (30 if cm in (6, 9) else 31)
+        s = f"{cy}{cm:02d}{day:02d}"
+        if s not in ends:
+            ends.append(s)
+        # 往前推一个季度
+        qi = q_months.index(cm)
+        if qi == 0:
+            y, m = cy - 1, 12
+        else:
+            y, m = cy, q_months[qi - 1]
+    return ends
+
+
 @app.get("/api/pick")
 def pick(_=Depends(check_key)):
     idx = date.today().timetuple().tm_yday % len(PICK_POOL)
     code, name = PICK_POOL[idx]
     try:
-        # 财务摘要：按报告期倒序排列，第0行是最新一期
-        try:
-            fin = ak.stock_financial_abstract(symbol=code)
-        except TypeError:
-            fin = ak.stock_financial_abstract(stock=code)
-
-        latest = fin.iloc[0]
-        # 找同季度上一年的数据算同比（报告期字符串形如 2025-03-31）
-        latest_date = str(latest.get("截止日期", latest.get("选项", "")))
-        yoy_row = None
-        for _, r in fin.iterrows():
-            d = str(r.get("截止日期", r.get("选项", "")))
-            if d.startswith(str(int(latest_date[:4]) - 1)) if latest_date[:4].isdigit() else False:
-                if d[5:] == latest_date[5:]:
-                    yoy_row = r
+        row, report_date = None, None
+        last_err = None
+        for qend in _recent_quarter_ends():
+            try:
+                df = cached(f"yjbb_{qend}", lambda qend=qend: ak.stock_yjbb_em(date=qend), ttl=3600)
+                match = df[df["股票代码"] == code]
+                if not match.empty:
+                    row, report_date = match.iloc[0], qend
                     break
+            except Exception as e:
+                last_err = e
+                continue
+        if row is None:
+            raise Exception(f"最近几个报告期都没查到 {code} 的业绩数据（{last_err}）")
 
-        revenue = _num(latest.get("主营业务收入") or latest.get("营业收入"))
-        profit = _num(latest.get("净利润"))
-        prev_revenue = _num(yoy_row.get("主营业务收入") or yoy_row.get("营业收入")) if yoy_row is not None else None
-        prev_profit = _num(yoy_row.get("净利润")) if yoy_row is not None else None
+        col_rev = _find_col(row.to_frame().T, ["营业收入"]) or "营业收入"
+        col_rev_yoy = _find_col(row.to_frame().T, ["营业收入", "同比"])
+        col_profit = _find_col(row.to_frame().T, ["净利润"]) or "净利润"
+        col_profit_yoy = _find_col(row.to_frame().T, ["净利润", "同比"])
+        col_roe = _find_col(row.to_frame().T, ["净资产收益率"])
+        col_industry = _find_col(row.to_frame().T, ["所处行业"])
+        col_margin = _find_col(row.to_frame().T, ["毛利率"])
 
-        rev_yoy = (revenue - prev_revenue) / prev_revenue * 100 if revenue and prev_revenue else None
-        profit_yoy = (profit - prev_profit) / prev_profit * 100 if profit and prev_profit else None
+        revenue = _num(row.get(col_rev))
+        profit = _num(row.get(col_profit))
+        rev_yoy = _num(row.get(col_rev_yoy)) if col_rev_yoy else None
+        profit_yoy = _num(row.get(col_profit_yoy)) if col_profit_yoy else None
+        roe = _num(row.get(col_roe)) if col_roe else None
+        margin = _num(row.get(col_margin)) if col_margin else None
+        industry = row.get(col_industry) if col_industry else None
 
         spot = cached("a_spot", ak.stock_zh_a_spot_em)
         srow = spot[spot["代码"] == code]
         cap = float(srow.iloc[0].get("总市值")) if not srow.empty else None
-        pe = float(srow.iloc[0].get("市盈率-动态")) if not srow.empty and "市盈率-动态" in srow.columns else None
+        pe = srow.iloc[0].get("市盈率-动态") if not srow.empty and "市盈率-动态" in srow.columns else None
 
         def fmt_yi(v):
             return f"{v/1e8:.1f}亿元" if v else "数据缺失"
@@ -272,33 +378,33 @@ def pick(_=Depends(check_key)):
 
         return {
             "name": name, "code": code, "cat": "A股",
-            "report_date": latest_date,
-            "one_liner": f"{name}（{code}），最新报告期 {latest_date} 的真实财报数据如下。",
+            "report_date": f"{report_date[:4]}-{report_date[4:6]}-{report_date[6:]}",
+            "one_liner": f"{name}（{code}），所属行业「{industry or '未知'}」，最新报告期真实财报数据如下。",
             "profit": {
-                "verdict": f"最新一期营业收入 {fmt_yi(revenue)}，净利润 {fmt_yi(profit)}，"
-                           f"净利润同比 {fmt_pct(profit_yoy)}。",
-                "data": f"营业收入同比 {fmt_pct(rev_yoy)}；数据来自财务摘要报表（新浪财经），"
-                        f"未做扣非/一次性损益调整，仅供初步参考。",
+                "verdict": f"最新一期营业收入 {fmt_yi(revenue)}，净利润 {fmt_yi(profit)}，净利润同比 {fmt_pct(profit_yoy)}。",
+                "data": f"营业收入同比 {fmt_pct(rev_yoy)}，净资产收益率(ROE) {fmt_pct(roe)}；"
+                        f"数据来自东方财富-上市公司业绩报表，未做扣非调整，仅供初步参考。",
             },
             "moat": {
-                "verdict": "护城河强弱这里不做主观判断，建议自己核对该公司近3年毛利率是否稳定，越稳定说明议价权越强。",
-                "data": f"当前总市值约 {fmt_yi(cap)}，动态市盈率 {pe if pe else '暂无'}，"
-                        f"市值和估值水平可以帮助你判断市场当下怎么给它的护城河定价。",
+                "verdict": "护城河强弱这里不做主观判断，建议核对该公司近3年毛利率是否稳定，越稳定说明议价权越强。",
+                "data": f"最新销售毛利率 {fmt_pct(margin)}；当前总市值约 {fmt_yi(cap)}，动态市盈率 {pe if pe else '暂无'}，"
+                        f"市值和估值可以帮助你判断市场当下怎么给它的护城河定价。",
             },
             "industry": {
-                "verdict": "行业空间建议结合该公司最新年报里的“行业发展趋势”章节自行判断，这里不替你下结论。",
+                "verdict": f"所处行业分类为「{industry or '未知'}」，行业空间建议结合最新年报「行业发展趋势」章节自行判断。",
                 "data": "可以在巨潮资讯网（cninfo.com.cn）搜这家公司代码查最新年报原文。",
             },
             "howtomoney": {
                 "verdict": f"{name} 的收入结构建议直接查利润表里的分产品/分地区收入明细来确认主营业务占比。",
-                "data": "财务摘要接口只给汇总数字，明细要看完整利润表，可在东方财富/巨潮资讯查该股“主营构成”页面。",
+                "data": "这里只有汇总数字，明细要看完整利润表，可在东方财富/巨潮资讯查该股“主营构成”页面。",
             },
             "key_takeaway": [
-                f"最新净利润 {fmt_yi(profit)}，同比 {fmt_pct(profit_yoy)}（数据点：财务摘要-净利润）",
-                f"最新营业收入 {fmt_yi(revenue)}，同比 {fmt_pct(rev_yoy)}（数据点：财务摘要-主营业务收入）",
+                f"最新净利润 {fmt_yi(profit)}，同比 {fmt_pct(profit_yoy)}（数据点：业绩报表-净利润）",
+                f"最新营业收入 {fmt_yi(revenue)}，同比 {fmt_pct(rev_yoy)}（数据点：业绩报表-营业收入）",
+                f"净资产收益率 {fmt_pct(roe)}，销售毛利率 {fmt_pct(margin)}（数据点：业绩报表）",
                 f"当前总市值 {fmt_yi(cap)}，动态市盈率 {pe if pe else '暂无'}（数据点：实时行情-东方财富）",
             ],
-            "risk": "自动生成的四点法只覆盖了摘要层面的数字，护城河和行业空间需要你自己读年报判断，不要只看这个页面就下单。",
+            "risk": "自动生成的四点法只覆盖了报表层面的数字，护城河和行业空间需要你自己读年报判断，不要只看这个页面就下单。",
         }
     except Exception as e:
         raise HTTPException(500, f"抓取 {name}({code}) 的财报数据失败：{e}")
